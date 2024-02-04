@@ -16,7 +16,7 @@ def load_image(img_path, greyscale = False):
     # Check if Image Was Not Loaded as Greyscale
     if(greyscale == False):
 
-        # The Number of Color Channels in the Image (2 = Greyscale, 3 = RGB, 4 = RGBA)
+        # The Number of Color Channels in the Image (3 = RGB, 4 = RGBA)
         max_channels = img.shape[-1]
         
         if(max_channels != 4):
