@@ -25,6 +25,18 @@ def load_image(img_path, greyscale = False):
     return img
 
 def rgb2rgba(img):
+    """Converts the Provided Image from RGB to RGBA, Adding Alpha Values to Every Pixel.
+    
+    Parameters
+    ----------
+    img : ndarray, required
+        The Loaded Image to Convert
+    
+    Returns
+    -------
+    The Converted Image, as an ndarray
+    """
+    
     return numpy.insert(img, 3, 255, axis=2)
 
 def display_image_data(img_path, greyscale = False):
