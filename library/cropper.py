@@ -1,3 +1,5 @@
+import library.settings as settings
+
 import skimage as ski
 import os
 from library.helper import rgb2rgba
@@ -32,6 +34,8 @@ def find_boundries(img):
             However Can Return a Longer List of Boundries Depending on the Profile Settings.
     """
     
+    settings.log_file.enter(f"Starting to Find Boundries")
+    
     # The Main Boundry to Be Returned
     final_boundry = [0, 0, 0, 0]
     
@@ -63,11 +67,13 @@ def find_boundries(img):
     
     # Load a Greyscale Version of Image for Easier Processing if Needed
     if(type(img.grayscale) != list):
+        settings.log_file.enter(f"Couldn't Find Grayscale. Loading One")
         gs_img = rgba2rgb(img.color)
         gs_img = rgb2gray(gs_img)
         img.grayscale = gs_img
     
     # Start Finding Left Boundry
+    settings.log_file.enter(f"Finding Left Boundry")
     while(curr_col < img.col_size):
         # Grab Pixel Information
         pixel = img.grayscale[center_row, curr_col]
@@ -78,42 +84,26 @@ def find_boundries(img):
         # The Difference in the Pixel Color/Brightness
         pixel_difference = 0
         
-        #if(is_grey):
         pixel_difference = pixel - prev_pixel
         
         # Make Sure the Difference is a Positive Number
         if(pixel_difference < 0): pixel_difference *= -1
         
-        print(f"Pixel Difference = {pixel_difference}")
-        
         # If the Difference Has Reached the Threshold
         if(pixel_difference >= gs_threshold):
-            print(f"Pixel Difference Hit Threshold") 
+            settings.log_file.enter(f"Pixel Difference Hit Threshold")
+            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True) 
             # Set the Left Boundry to the Current Column
             final_boundry[0] = curr_col
+            settings.log_file.enter(f"Left Boundry: {curr_col}", True)
             # Reset Previous Pixel Value
             prev_pixel = None
             break
             
-        # Run a Similar Process for Colored Image    
-        #else:
-            #pixel_difference = [pixel[0] - prev_pixel[0], pixel[1] - prev_pixel[1], pixel[2] - prev_pixel[2]]
-            #print(f"Pixel Difference = {pixel_difference}")
-            
-            #if(pixel_difference[0] < 0): pixel_difference[0] *= -1
-            #if(pixel_difference[1] < 0): pixel_difference[1] *= -1
-            #if(pixel_difference[2] < 0): pixel_difference[2] *= -1
-            
-            # If Any Color Band Hits the Threshold
-            #if(pixel_difference[0] > threshold or pixel_difference[1] > threshold or pixel_difference[2] > threshold):
-                #print(f"Pixel Difference Hit Threshold")
-                #final_boundry[0] = curr_col
-                #prev_pixel = None
-                #break
-            
         curr_col += 1
             
     # Now Find Upper Boundry
+    settings.log_file.enter(f"Finding Upper Boundry")
     while(curr_row < img.row_size):
         # Grab Pixel Information
         pixel = img.grayscale[curr_row, center_col]
@@ -124,47 +114,35 @@ def find_boundries(img):
         # The Difference in the Pixel Color/Brightness
         pixel_difference = 0
         
-        #if(is_grey):
         pixel_difference = pixel - prev_pixel
         
         # Make Sure the Difference is a Positive Number
         if(pixel_difference < 0): pixel_difference *= -1
         
         # If the Difference Has Reached the Threshold
-        if(pixel_difference >= gs_threshold): 
+        if(pixel_difference >= gs_threshold):
+            settings.log_file.enter(f"Pixel Difference Hit Threshold")
+            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True)
             # Set the Upper Boundry to the Current Row
             final_boundry[1] = curr_row
+            settings.log_file.enter(f"Upper Boundry: {curr_col}", True)
             # Reset Previous Pixel Value
             prev_pixel = None
             break
             
-        # Run a Similar Process for Colored Image    
-        #else:
-            #pixel_difference = [pixel[0] - prev_pixel[0], pixel[1] - prev_pixel[1], pixel[2] - prev_pixel[2]]
-            
-            #if(pixel_difference[0] < 0): pixel_difference[0] *= -1
-            #if(pixel_difference[1] < 0): pixel_difference[1] *= -1
-            #if(pixel_difference[2] < 0): pixel_difference[2] *= -1
-            
-            # If Any Color Band Hits the Threshold
-            #if(pixel_difference[0] > threshold or pixel_difference[1] > threshold or pixel_difference[2] > threshold):
-                #final_boundry[1] = curr_row
-                #prev_pixel = None
-                #break
-            
         curr_row += 1
         
     # Prepare to Find the Right and Lower Boundries
+    settings.log_file.enter(f"Reseting Positions to Find Next Boundries")
     curr_row = img.row_size - 1
     curr_col = img.col_size - 1
     prev_pixel = None
     
     # Start Finding Right Boundry
+    settings.log_file.enter(f"Finding Right Boundry")
     while(curr_col > final_boundry[0]):
-        print(f"Current Column: {curr_col}")
         # Grab Pixel Information
         pixel = img.grayscale[center_row, curr_col]
-        print(f"Pixel: {pixel}")
         if(prev_pixel == None): 
             prev_pixel = pixel
             continue
@@ -178,34 +156,21 @@ def find_boundries(img):
         # Make Sure the Difference is a Positive Number
         if(pixel_difference < 0): pixel_difference *= -1
         
-        print(f"Pixel Difference: {pixel_difference}")
-        
         # If the Difference Has Reached the Threshold
         if(pixel_difference >= gs_threshold): 
-            print(f"Threshold Met! At {curr_col}")
+            settings.log_file.enter(f"Pixel Difference Hit Threshold")
+            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True)
             # Set the Right Boundry to the Current Column
             final_boundry[2] = curr_col
+            settings.log_file.enter(f"Right Boundry: {curr_col}", True)
             # Reset Previous Pixel Value
             prev_pixel = None
             break
             
-        # Run a Similar Process for Colored Image    
-        #else:
-            #pixel_difference = [pixel[0] - prev_pixel[0], pixel[1] - prev_pixel[1], pixel[2] - prev_pixel[2]]
-            
-            #if(pixel_difference[0] < 0): pixel_difference[0] *= -1
-            #if(pixel_difference[1] < 0): pixel_difference[1] *= -1
-            #if(pixel_difference[2] < 0): pixel_difference[2] *= -1
-            
-            # If Any Color Band Hits the Threshold
-            #if(pixel_difference[0] > threshold or pixel_difference[1] > threshold or pixel_difference[2] > threshold):
-                #final_boundry[2] = curr_col
-                #prev_pixel = None
-                #break
-            
         curr_col -= 1
             
     # Now Find Lower Boundry
+    settings.log_file.enter(f"Finding Lower Boundry")
     while(curr_row > start_row):
         # Grab Pixel Information
         pixel = img.grayscale[curr_row, center_col]
@@ -223,32 +188,21 @@ def find_boundries(img):
         if(pixel_difference < 0): pixel_difference *= -1
         
         # If the Difference Has Reached the Threshold
-        if(pixel_difference >= gs_threshold): 
+        if(pixel_difference >= gs_threshold):
+            settings.log_file.enter(f"Pixel Difference Hit Threshold")
+            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True) 
             # Set the Lower Boundry to the Current Row
             final_boundry[3] = curr_row
+            settings.log_file.enter(f"Lower Boundry: {curr_col}", True)
             # Reset Previous Pixel Value
             prev_pixel = None
             break
-            
-        # Run a Similar Process for Colored Image    
-        #else:
-            #pixel_difference = [pixel[0] - prev_pixel[0], pixel[1] - prev_pixel[1], pixel[2] - prev_pixel[2]]
-            
-            #if(pixel_difference[0] < 0): pixel_difference[0] *= -1
-            #if(pixel_difference[1] < 0): pixel_difference[1] *= -1
-            #if(pixel_difference[2] < 0): pixel_difference[2] *= -1
-            
-            # If Any Color Band Hits the Threshold
-            #if(pixel_difference[0] > threshold or pixel_difference[1] > threshold or pixel_difference[2] > threshold):
-                #final_boundry[3] = curr_row
-                #prev_pixel = None
-                #break
             
         curr_row -= 1
         
     # Find and Process Crop Boundries From Profiles Here
     
-    print(f"Final Boundries = {final_boundry}")
+    settings.log_file.enter(f"Final Boundries: {final_boundry}")
     # Return Single Final Boundry
     return final_boundry
 
@@ -272,8 +226,11 @@ def crop_image(img, boundries):
         If List, it is All of the Cropped Images from Multiple Boundries.
     """
     
+    settings.log_file.enter(f"Starting Crop Process")
+    
     # Bool for if There are Multiple Crop Boundries
     is_multiple = type(boundries[0]) == list
+    settings.log_file.enter(f"Multiple Crops: {is_multiple}")
     
     # Initialize Final Image Variable
     c_img = None

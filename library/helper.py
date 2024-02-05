@@ -1,3 +1,5 @@
+import library.settings as settings
+
 import skimage as ski
 import numpy
 
@@ -10,7 +12,8 @@ def load_image(img_path, greyscale = False):
         The Full Filepath of the Image 
     """
 
-    # Attempts to Return the Loaded Image
+    settings.log_file.enter(f"Attempting to Load {img_path} With Grayscale={greyscale}")
+    # Attempts to Load Image
     img = ski.io.imread(img_path, as_gray=greyscale)
 
     # Check if Image Was Not Loaded as Greyscale
@@ -18,8 +21,10 @@ def load_image(img_path, greyscale = False):
 
         # The Number of Color Channels in the Image (3 = RGB, 4 = RGBA)
         max_channels = img.shape[-1]
+        settings.log_file.enter(f"Channels: {max_channels}", True)
         
         if(max_channels != 4):
+            settings.log_file.enter(f"Converting Image to RGBA")
             img = rgb2rgba(img)
         
     return img

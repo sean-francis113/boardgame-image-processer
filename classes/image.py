@@ -1,3 +1,5 @@
+import library.settings as settings
+
 import datetime
 import skimage as ski
 
@@ -13,7 +15,7 @@ class image:
     col_size = 0
     edits_done = []
     
-    def __init__(self, n, fp, ie, c, g, ed=[]):
+    def __init__(self, n, fp, ie, c, g, ed=[]) -> None:
         self.name = n
         self.folder_path = fp
         self.image_extension = ie
@@ -28,6 +30,9 @@ class image:
             for edit in ed:
                 self.add_edit(f"{edit}")
                 
+    def __str__(self) -> str:
+        return f"Name: {self.name}\n\tPath: {self.folder_path}\n\tImage Type: {self.image_extension}\n\tImage Size: {self.row_size} X {self.col_size}\n"
+                
     def crop(self, boundries):
         """Crops Both the Color and Grayscale Image Arrays to Keep Both Versions Synced.
         
@@ -39,10 +44,10 @@ class image:
         
         self.color = self.color[boundries[1]:boundries[3]+1,boundries[0]:boundries[2]+1]
         self.grayscale = self.grayscale[boundries[1]:boundries[3]+1,boundries[0]:boundries[2]+1]
-        row_size = self.color.shape[0]
-        col_size = self.color.shape[1]
+        self.row_size = (boundries[3]+1) - (boundries[1])
+        self.col_size = (boundries[2]+1) - (boundries[0])
                 
-        self.add_edit(f"{self.name} Image Cropped. \n\tBoundries = {boundries}; Final Size = [{row_size}, {col_size}]")
+        self.add_edit(f"{self.name} Image Cropped. \n\tBoundries = {boundries}; Final Size = [{self.row_size}, {self.col_size}]", True)
         
         return self
         
@@ -56,15 +61,20 @@ class image:
             Defaults to \"color\".
         """
         
+        settings.log_file.enter(f"Attempting to Save {self.name}")
+        
         to_save = to_save.lower()
         
         if(to_save == "color"):
+            settings.log_file.enter(f"Saving Color Image Only")
             ski.io.imsave(f"{self.folder_path}{self.name}{self.image_extension}", self.color)
             self.add_edit(f"{self.name} (Colored) Saved to {self.folder_path}{self.name}{self.image_extension}")
         elif(to_save == "gray"):
+            settings.log_file.enter(f"Saving Grayscale Image Only")
             ski.io.imsave(f"{self.folder_path}{self.name}{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
             self.add_edit(f"{self.name} (Grayscale) Saved to {self.folder_path}{self.name}{self.image_extension}")
         elif(to_save == "both"):
+            settings.log_file.enter(f"Saving Both Color and Grayscale Images")
             ski.io.imsave(f"{self.folder_path}{self.name}_color{self.image_extension}", self.color)
             self.add_edit(f"{self.name} (Colored) Saved to {self.folder_path}{self.name}_color{self.image_extension}")
             ski.io.imsave(f"{self.folder_path}{self.name}_grayscale{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
@@ -91,4 +101,4 @@ class image:
         edit_str = f"{date_str}: {str}"
         
         self.edits_done.append(edit_str)
-        print(edit_str)
+        settings.log_file.enter(edit_str)
