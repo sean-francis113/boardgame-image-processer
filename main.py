@@ -4,6 +4,8 @@ import os
 import numpy as np
 
 import library as l
+import classes as c
+import classes.image as image
 import library.helper as h
 import library.cropper as crop
 
@@ -22,12 +24,18 @@ image_filepath = f""
 # The Current Game Profile Being Processed
 curr_game_profile = f""
 
-test_img = h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\arcane_swap_croptest.png")
-print(f"Loading arcane_swap_croptest.png as Grayscale")
-print(f"Starting to Crop")
-cropped_img = crop.crop_image(test_img, crop.find_boundries(test_img))
+test_img = image.image(
+    "arcane_swap_croptest",
+    "E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\",
+    ".png", 
+    h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\arcane_swap_croptest.png"),
+    h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\arcane_swap_croptest.png", greyscale=True)
+    )
+original_img = test_img
 
-print(f"Original Image: {test_img.shape}\n\n")
-print(f"Cropped Image: {cropped_img.shape}")
-print(f"Cropped Image Center Pixel = {cropped_img[int(cropped_img.shape[0] / 2), int(cropped_img.shape[1] / 2)]}")
-ski.io.imsave("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\arcane_swap_croptest_result.png", cropped_img)
+print(f"Starting Crop of {test_img.name}")
+test_img = crop.crop_image(test_img, crop.find_boundries(test_img))
+
+print(f"Original Image: {original_img.color.shape}\n\n")
+print(f"Cropped Image: {test_img.color.shape}")
+test_img.save(to_save="both")

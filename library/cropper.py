@@ -21,7 +21,7 @@ def find_boundries(img):
     
     Parameters
     ----------
-    img : ndarray, required
+    img : image, required
         The Image Loaded from Skimage
     
     Returns
@@ -34,15 +34,6 @@ def find_boundries(img):
     
     # The Main Boundry to Be Returned
     final_boundry = [0, 0, 0, 0]
-
-    # Bool for if image is greyscale
-    is_grey = len(img.shape) == 2
-    
-    # The Furthest Horizontal Pixel
-    max_rows = img.shape[0]
-    
-    # The Furthest Vertical Pixel
-    max_cols = img.shape[1]
     
     # The Row to Start Analyzing
     # Will Be Pulled from Profile Settings
@@ -59,10 +50,10 @@ def find_boundries(img):
     curr_col = start_col
     
     # The Center Row of the Image
-    center_row = int((max_rows - start_row) / 2)
+    center_row = int((img.row_size - start_row) / 2)
     
     # The Center Column of the Image
-    center_col = int((max_cols - start_col) / 2)
+    center_col = int((img.col_size - start_col) / 2)
     
     # The Pixel Being Analyzed
     pixel = None
@@ -70,14 +61,16 @@ def find_boundries(img):
     # The Previous Pixel Analyzed
     prev_pixel = None
     
-    # Load a Greyscale Version of Image for Easier Processing
-    gs_img = rgba2rgb(img)
-    gs_img = rgb2gray(gs_img)
+    # Load a Greyscale Version of Image for Easier Processing if Needed
+    if(type(img.grayscale) != list):
+        gs_img = rgba2rgb(img.color)
+        gs_img = rgb2gray(gs_img)
+        img.grayscale = gs_img
     
     # Start Finding Left Boundry
-    while(curr_col < max_cols):
+    while(curr_col < img.col_size):
         # Grab Pixel Information
-        pixel = gs_img[center_row, curr_col]
+        pixel = img.grayscale[center_row, curr_col]
         if(prev_pixel == None): 
             prev_pixel = pixel
             continue
@@ -121,9 +114,9 @@ def find_boundries(img):
         curr_col += 1
             
     # Now Find Upper Boundry
-    while(curr_row < max_rows):
+    while(curr_row < img.row_size):
         # Grab Pixel Information
-        pixel = gs_img[curr_row, center_col]
+        pixel = img.grayscale[curr_row, center_col]
         if(prev_pixel == None): 
             prev_pixel = pixel
             continue
@@ -162,15 +155,15 @@ def find_boundries(img):
         curr_row += 1
         
     # Prepare to Find the Right and Lower Boundries
-    curr_row = max_rows - 1
-    curr_col = max_cols - 1
+    curr_row = img.row_size - 1
+    curr_col = img.col_size - 1
     prev_pixel = None
     
     # Start Finding Right Boundry
     while(curr_col > final_boundry[0]):
         print(f"Current Column: {curr_col}")
         # Grab Pixel Information
-        pixel = gs_img[center_row, curr_col]
+        pixel = img.grayscale[center_row, curr_col]
         print(f"Pixel: {pixel}")
         if(prev_pixel == None): 
             prev_pixel = pixel
@@ -215,7 +208,7 @@ def find_boundries(img):
     # Now Find Lower Boundry
     while(curr_row > start_row):
         # Grab Pixel Information
-        pixel = gs_img[curr_row, center_col]
+        pixel = img.grayscale[curr_row, center_col]
         if(prev_pixel == None): 
             prev_pixel = pixel
             continue
@@ -266,7 +259,7 @@ def crop_image(img, boundries):
     
     Parameters
     ----------
-    img : ndarray, required
+    img : image, required
         The Image Loaded from Skimage
     boundries : list, required
         The List of Boundries to Crop the Image to. 
@@ -274,7 +267,7 @@ def crop_image(img, boundries):
         
     Returns
     -------
-    c_img : ndarray or list
+    c_img : image or list
         The Final Image after Cropping. 
         If List, it is All of the Cropped Images from Multiple Boundries.
     """
@@ -288,10 +281,36 @@ def crop_image(img, boundries):
     
     # Crop the First Image
     if(is_multiple == False):
-        c_img = img[boundries[1]:boundries[3]+1,boundries[0]:boundries[2]+1]
+        img = img.crop(boundries)
         # Go On and Return the Cropped Image
-        return c_img
-    else:
-        c_img[0] = img[boundries[0][0]:boundries[0][2]+1, boundries[0][1]:boundries[0][3]+1]
+        return img
+    #else:
+        #c_img[0] = img[boundries[0][0]:boundries[0][2]+1, boundries[0][1]:boundries[0][3]+1]
         
+def clean_image(img):
+    """Cleans the Corners and Edges of the Image to Make its Background Transparent.
+    
+    Parameters
+    ----------
+    img : ndarray, required
+        The Loaded Image to Clean
+        
+    Returns
+    -------
+    t_img : ndarray
+        The Image Cleaned and Transparent
+    """
+    
+    # The Starting Row
+    start_row = 0
+    
+    # The Starting Column
+    start_col = 0
+    
+    # The Furthest Row
+    row_size = img.shape[0]
+    
+    # The Furthest Column
+    col_size = img.shape[1]
+    
     
