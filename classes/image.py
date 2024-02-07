@@ -47,7 +47,7 @@ class image:
         self.row_size = (boundries[3]+1) - (boundries[1])
         self.col_size = (boundries[2]+1) - (boundries[0])
                 
-        self.add_edit(f"{self.name} Image Cropped. \n\tBoundries = {boundries}; Final Size = [{self.row_size}, {self.col_size}]", True)
+        self.add_edit(f"{self.name} Image Cropped. \n\tBoundries = {boundries}; Final Size = [{self.row_size}, {self.col_size}]")
         
         return self
         

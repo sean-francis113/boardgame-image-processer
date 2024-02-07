@@ -3,7 +3,7 @@ import library.settings as settings
 import skimage as ski
 import os
 from library.helper import rgb2rgba
-
+import numpy
 from skimage.color import rgb2gray, rgba2rgb
 from skimage import data
 
@@ -63,10 +63,20 @@ def find_boundries(img):
     pixel = None
     
     # The Previous Pixel Analyzed
-    prev_pixel = None
+    # NO LONGER USED
+    #prev_pixel = None
+    
+    # The Pixel Value to Compare To
+    base_pixel_gs = 1.0 # Grayscale White
+    
+    # The Difference in the Pixel Color/Brightness
+    pixel_difference = 0
+    
+    # If Boundry Was Found
+    bound_found = False
     
     # Load a Greyscale Version of Image for Easier Processing if Needed
-    if(type(img.grayscale) != list):
+    if(type(img.grayscale) != numpy.ndarray):
         settings.log_file.enter(f"Couldn't Find Grayscale. Loading One")
         gs_img = rgba2rgb(img.color)
         gs_img = rgb2gray(gs_img)
@@ -74,61 +84,74 @@ def find_boundries(img):
     
     # Start Finding Left Boundry
     settings.log_file.enter(f"Finding Left Boundry")
-    while(curr_col < img.col_size):
-        # Grab Pixel Information
-        pixel = img.grayscale[center_row, curr_col]
-        if(prev_pixel == None): 
-            prev_pixel = pixel
-            continue
-        
-        # The Difference in the Pixel Color/Brightness
-        pixel_difference = 0
-        
-        pixel_difference = pixel - prev_pixel
-        
-        # Make Sure the Difference is a Positive Number
-        if(pixel_difference < 0): pixel_difference *= -1
-        
-        # If the Difference Has Reached the Threshold
-        if(pixel_difference >= gs_threshold):
-            settings.log_file.enter(f"Pixel Difference Hit Threshold")
-            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True) 
-            # Set the Left Boundry to the Current Column
-            final_boundry[0] = curr_col
-            settings.log_file.enter(f"Left Boundry: {curr_col}", True)
-            # Reset Previous Pixel Value
-            prev_pixel = None
-            break
+    while(curr_col < img.col_size and bound_found == False):
+        curr_row = start_row
+        # Search Each Pixel in Column for Threshold.
+        while(curr_row < img.row_size):
+            # Grab Pixel Information
+            pixel = img.grayscale[center_row, curr_col]
+            #if(prev_pixel == None): 
+                #prev_pixel = pixel
+                #continue
+            
+            pixel_difference = pixel - base_pixel_gs
+            
+            # Make Sure the Difference is a Positive Number
+            if(pixel_difference < 0): pixel_difference *= -1
+            
+            # If the Difference Has Reached the Threshold
+            if(pixel_difference >= gs_threshold):
+                settings.log_file.enter(f"Pixel Difference Hit Threshold")
+                settings.log_file.enter(f"Base: {base_pixel_gs}; Current: {pixel}; Difference: {pixel_difference}", True) 
+                # Set the Left Boundry to the Current Column
+                final_boundry[0] = curr_col
+                settings.log_file.enter(f"Left Boundry: {curr_col}", True)
+                # Reset Previous Pixel Value and Start Positions
+                prev_pixel = None
+                curr_col = start_col
+                curr_row = start_row
+                # Set Boundry Found Flag
+                bound_found = True
+                break
+            
+            curr_row += 1
             
         curr_col += 1
             
     # Now Find Upper Boundry
     settings.log_file.enter(f"Finding Upper Boundry")
-    while(curr_row < img.row_size):
-        # Grab Pixel Information
-        pixel = img.grayscale[curr_row, center_col]
-        if(prev_pixel == None): 
-            prev_pixel = pixel
-            continue
-        
-        # The Difference in the Pixel Color/Brightness
-        pixel_difference = 0
-        
-        pixel_difference = pixel - prev_pixel
-        
-        # Make Sure the Difference is a Positive Number
-        if(pixel_difference < 0): pixel_difference *= -1
-        
-        # If the Difference Has Reached the Threshold
-        if(pixel_difference >= gs_threshold):
-            settings.log_file.enter(f"Pixel Difference Hit Threshold")
-            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True)
-            # Set the Upper Boundry to the Current Row
-            final_boundry[1] = curr_row
-            settings.log_file.enter(f"Upper Boundry: {curr_col}", True)
-            # Reset Previous Pixel Value
-            prev_pixel = None
-            break
+    bound_found = False
+    while(curr_row < img.row_size and bound_found == False):
+        curr_col = start_col
+        #Search Every Pixel in Row for Threshold
+        while(curr_col < img.col_size):
+            # Grab Pixel Information
+            pixel = img.grayscale[curr_row, center_col]
+            #if(prev_pixel == None): 
+                #prev_pixel = pixel
+                #continue
+            
+            pixel_difference = pixel - base_pixel_gs
+            
+            # Make Sure the Difference is a Positive Number
+            if(pixel_difference < 0): pixel_difference *= -1
+            
+            # If the Difference Has Reached the Threshold
+            if(pixel_difference >= gs_threshold):
+                settings.log_file.enter(f"Pixel Difference Hit Threshold")
+                settings.log_file.enter(f"Base: {base_pixel_gs}; Current: {pixel}; Difference: {pixel_difference}", True)
+                # Set the Upper Boundry to the Current Row
+                final_boundry[1] = curr_row
+                settings.log_file.enter(f"Upper Boundry: {curr_row}", True)
+                # Reset Previous Pixel Value and Start Positions
+                prev_pixel = None
+                curr_col = start_col
+                curr_row = start_row
+                # Set Boundry Found Flag
+                bound_found = True
+                break
+            
+            curr_col += 1
             
         curr_row += 1
         
@@ -136,67 +159,78 @@ def find_boundries(img):
     settings.log_file.enter(f"Reseting Positions to Find Next Boundries")
     curr_row = img.row_size - 1
     curr_col = img.col_size - 1
-    prev_pixel = None
+    #prev_pixel = None
     
     # Start Finding Right Boundry
     settings.log_file.enter(f"Finding Right Boundry")
-    while(curr_col > final_boundry[0]):
-        # Grab Pixel Information
-        pixel = img.grayscale[center_row, curr_col]
-        if(prev_pixel == None): 
-            prev_pixel = pixel
-            continue
-        
-        # The Difference in the Pixel Color/Brightness
-        pixel_difference = 0
-        
-        #if(is_grey):
-        pixel_difference = pixel - prev_pixel
-        
-        # Make Sure the Difference is a Positive Number
-        if(pixel_difference < 0): pixel_difference *= -1
-        
-        # If the Difference Has Reached the Threshold
-        if(pixel_difference >= gs_threshold): 
-            settings.log_file.enter(f"Pixel Difference Hit Threshold")
-            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True)
-            # Set the Right Boundry to the Current Column
-            final_boundry[2] = curr_col
-            settings.log_file.enter(f"Right Boundry: {curr_col}", True)
-            # Reset Previous Pixel Value
-            prev_pixel = None
-            break
+    bound_found = False
+    while(curr_col > final_boundry[0] and bound_found == False):
+        curr_row = img.row_size - 1
+        # Search Every Pixel for Threshold
+        while(curr_row > final_boundry[1]):            
+            # Grab Pixel Information
+            pixel = img.grayscale[center_row, curr_col]
+            #if(prev_pixel == None): 
+                #prev_pixel = pixel
+                #continue
+            
+            #if(is_grey):
+            pixel_difference = pixel - base_pixel_gs
+            
+            # Make Sure the Difference is a Positive Number
+            if(pixel_difference < 0): pixel_difference *= -1
+            
+            # If the Difference Has Reached the Threshold
+            if(pixel_difference >= gs_threshold): 
+                settings.log_file.enter(f"Pixel Difference Hit Threshold")
+                settings.log_file.enter(f"Base: {base_pixel_gs}; Current: {pixel}; Difference: {pixel_difference}", True)
+                # Set the Right Boundry to the Current Column
+                final_boundry[2] = curr_col
+                settings.log_file.enter(f"Right Boundry: {curr_col}", True)
+                # Reset Previous Pixel Value and Positions
+                prev_pixel = None
+                curr_row = img.row_size - 1
+                # Set Boundry Found Flag
+                bound_found = True
+                break
+            
+            curr_row -= 1
             
         curr_col -= 1
             
     # Now Find Lower Boundry
     settings.log_file.enter(f"Finding Lower Boundry")
-    while(curr_row > start_row):
-        # Grab Pixel Information
-        pixel = img.grayscale[curr_row, center_col]
-        if(prev_pixel == None): 
-            prev_pixel = pixel
-            continue
-        
-        # The Difference in the Pixel Color/Brightness
-        pixel_difference = 0
-        
-        #if(is_grey):
-        pixel_difference = pixel - prev_pixel
-        
-        # Make Sure the Difference is a Positive Number
-        if(pixel_difference < 0): pixel_difference *= -1
-        
-        # If the Difference Has Reached the Threshold
-        if(pixel_difference >= gs_threshold):
-            settings.log_file.enter(f"Pixel Difference Hit Threshold")
-            settings.log_file.enter(f"Previous: {prev_pixel}; Current: {pixel}; Difference: {pixel_difference}", True) 
-            # Set the Lower Boundry to the Current Row
-            final_boundry[3] = curr_row
-            settings.log_file.enter(f"Lower Boundry: {curr_col}", True)
-            # Reset Previous Pixel Value
-            prev_pixel = None
-            break
+    bound_found = False
+    while(curr_row > final_boundry[1] and bound_found == False):
+        curr_col = final_boundry[2]
+        # Search Every Pixel for Threshold
+        while(curr_col > final_boundry[0]):
+            # Grab Pixel Information
+            pixel = img.grayscale[curr_row, center_col]
+            #if(prev_pixel == None): 
+                #prev_pixel = pixel
+                #continue
+            
+            #if(is_grey):
+            pixel_difference = pixel - base_pixel_gs
+            
+            # Make Sure the Difference is a Positive Number
+            if(pixel_difference < 0): pixel_difference *= -1
+            
+            # If the Difference Has Reached the Threshold
+            if(pixel_difference >= gs_threshold):
+                settings.log_file.enter(f"Pixel Difference Hit Threshold")
+                settings.log_file.enter(f"Base: {base_pixel_gs}; Current: {pixel}; Difference: {pixel_difference}", True) 
+                # Set the Lower Boundry to the Current Row
+                final_boundry[3] = curr_row
+                settings.log_file.enter(f"Lower Boundry: {curr_row}", True)
+                # Reset Previous Pixel Value
+                prev_pixel = None
+                # Set Boundry Found Flag
+                bound_found = True
+                break
+            
+            curr_col -= 1
             
         curr_row -= 1
         
@@ -249,12 +283,12 @@ def clean_image(img):
     
     Parameters
     ----------
-    img : ndarray, required
+    img : image, required
         The Loaded Image to Clean
         
     Returns
     -------
-    t_img : ndarray
+    t_img : image
         The Image Cleaned and Transparent
     """
     
@@ -263,11 +297,6 @@ def clean_image(img):
     
     # The Starting Column
     start_col = 0
-    
-    # The Furthest Row
-    row_size = img.shape[0]
-    
-    # The Furthest Column
-    col_size = img.shape[1]
+
     
     
