@@ -2,6 +2,9 @@ import library.settings as settings
 
 import datetime
 import skimage as ski
+import os
+
+from copy import deepcopy
 
 class image:
     """Class for Holding Data About an Image, Including a Grayscale Copy, Edges, Changes Made, and More."""
@@ -15,15 +18,24 @@ class image:
     col_size = 0
     edits_done = []
     
-    def __init__(self, n, fp, ie, c, g, ed=[]) -> None:
+    def __init__(self, n, fp, ie, c=None, g=None, ed=[]) -> None:
         self.name = n
         self.folder_path = fp
         self.image_extension = ie
         self.color = c
         self.grayscale = g
-        self.row_size = c.shape[0]
-        self.col_size = c.shape[1]
         
+        if(c is None and g is None):
+            self.row_size = 0
+            self.col_size = 0
+        else:
+            if(c is not None):
+                self.row_size = c.shape[0]
+                self.col_size = c.shape[1]
+            elif(g is not None):
+                self.row_size = g.shape[0]
+                self.col_size = g.shape[1]
+                
         self.add_edit(f"{n} Created.")
         
         if len(ed) > 0:
@@ -65,6 +77,8 @@ class image:
         
         to_save = to_save.lower()
         
+        if(not os.path.exists(self.folder_path)): os.mkdir(self.folder_path)
+        
         if(to_save == "color"):
             settings.log_file.enter(f"Saving Color Image Only")
             ski.io.imsave(f"{self.folder_path}{self.name}{self.image_extension}", self.color)
@@ -102,3 +116,39 @@ class image:
         
         self.edits_done.append(edit_str)
         settings.log_file.enter(edit_str)
+        
+    def white_out(self, boundries):
+        """Sets All Pixels Inside of Boundry to White.
+        
+        Parameters
+        ----------
+        boundry : list, required
+            The Boundries to Set the Pixels in.
+        """
+        
+        row_iter = boundries[1]
+        col_iter = boundries[0]
+        
+        while(row_iter < boundries[3] + 1):
+            col_iter = boundries[0]
+            while(col_iter < boundries[2] + 1):
+                self.color[row_iter, col_iter] = [255,255,255,255]
+                self.grayscale[row_iter, col_iter] = 1.0
+                col_iter += 1
+            row_iter += 1
+        
+        return self
+    
+    def copy_from(self, img):
+        """Copies the Color and Greyscale Images from img.
+
+        Args:
+            img (classes.image): The Image to Copy From
+        """
+        
+        self.color = deepcopy(img.color)
+        self.grayscale = deepcopy(img.grayscale)
+        self.row_size = deepcopy(img.row_size)
+        self.col_size = deepcopy(img.col_size)
+        
+        self.add_edit(f"Copied Images from {img.name}")
