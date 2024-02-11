@@ -34,11 +34,11 @@ settings.log_file = log.log(
 settings.log_file.enter("Creating New Image")
 
 test_img = image.image(
-    n="arcane_swap_croptest",
+    n="multi_card_croptest",
     fp="E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\",
     ie=".png", 
-    c=h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\arcane_swap_croptest.png"),
-    g=h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\arcane_swap_croptest.png", greyscale=True)
+    c=h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\multi_card_croptest.png"),
+    g=h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\multi_card_croptest.png", greyscale=True)
     )
 
 original_img = image.image(
@@ -55,11 +55,15 @@ final_img = crop.crop_image(test_img, crop.find_boundries(test_img))
 
 if(type(final_img) == image.image):
     settings.log_file.enter(f"Cropped Image:\n\t{final_img}", True)
+    settings.log_file.enter(f"Cleaning {final_img.name}'s Edges")
+    final_img = crop.clean_image(final_img)
     final_img.save(to_save="both")
     settings.log_file.close()
 elif(type(final_img) == list):
     for img in final_img:
         settings.log_file.enter(f"Cropped Image:\n\t{img}", True)
+        settings.log_file.enter(f"Cleaning {img.name}'s Edges")
+        img = crop.clean_image(img)
         img.save(to_save="both")
     
     settings.log_file.close()

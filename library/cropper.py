@@ -15,8 +15,11 @@ profile_settings = None
 threshold = 100
 
 # The Greyscale Threshold When Analyzing and Operating on Pixel Brightness
-# Done This Way to Equalize Severity of Threshold
+# Done This Way to Equalize Severity of Threshold Between Color and Grayscale
 gs_threshold = threshold / 255
+
+# The Pixel Value to Compare To
+base_pixel_gs = 1.0 # Grayscale White
 
 def find_boundries(img, final_boundry=[]):
     """Analyzes the Provided Image and Uses Contrasting Pixels to Determine the Crop Boundries.
@@ -77,9 +80,6 @@ def find_boundries(img, final_boundry=[]):
     # The Previous Pixel Analyzed
     # NO LONGER USED
     #prev_pixel = None
-    
-    # The Pixel Value to Compare To
-    base_pixel_gs = 1.0 # Grayscale White
     
     # The Difference in the Pixel Color/Brightness
     pixel_difference = 0
@@ -456,5 +456,65 @@ def clean_image(img):
     # The Starting Column
     start_col = 0
 
+    # The Current Row
+    curr_row = start_row
     
+    # The Current Column
+    curr_col = start_col
+
+    # A Copy of the Image to Analyze and Work On
+    c_img = image.image(
+        n = img.name,
+        fp = img.folder_path,
+        ie = img.image_extension        
+    )
+    c_img.copy_from(img)
+
+    # Pixels to Make Transparent
+    pixel_ranges = []
+
+    # Start from Upper Left Corner and Head Down to the Lower Left Corner
+    while(curr_row < c_img.row_size):
+        curr_col = start_col
+        while(curr_col < c_img.col_size):
+            pixel = c_img.grayscale[curr_row, curr_col]
+            pixel_difference = abs(pixel - base_pixel_gs)
+            
+            
+            # If Threshold is Met, or We Hit the Edge of the Image, We've Hit the Ending Column
+            if(pixel_difference > gs_threshold or curr_col >= c_img.col_size - 1):
+                pixel_ranges.append([[curr_row, start_col], [curr_row, curr_col]])
+                curr_row += 1
+                break
+            
+            curr_col += 1
     
+    curr_row = start_row
+    curr_col = c_img.col_size - 1
+    # Start From the Upper Right Corner and Head Down to the Lower Right Corner
+    while(curr_row < c_img.row_size):
+        curr_col = c_img.col_size - 1
+        while(curr_col >= start_col):
+            pixel = c_img.grayscale[curr_row, curr_col]
+            pixel_difference = abs(pixel - base_pixel_gs)
+            
+            # If Threshold is Met, or We Hit the Edge of the Image, We've Hit the Ending Column
+            if(pixel_difference > gs_threshold or curr_col == start_col):
+                pixel_ranges.append([[curr_row, curr_col], [curr_row, c_img.col_size - 1]])
+                curr_row += 1
+                break
+            
+            curr_col -= 1
+            
+    # Run Through Whole List of Ranges
+    for range in pixel_ranges:
+        row_iter = range[0][0] # Get Range's Starting Row
+        col_iter = range[0][1] # Get Range's Starting Column
+        while(row_iter <= range[1][0]): # While Iterator Has Not Passed Ending Row
+            while(col_iter <= range[1][1]): # While Iterator Has Not Passed Ending Column
+                c_img.color[row_iter, col_iter][3] = 0 # Set Transparency of Pixel to Transparent
+                col_iter += 1
+            
+            row_iter += 1
+            
+    return c_img
