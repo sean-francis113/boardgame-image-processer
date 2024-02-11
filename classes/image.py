@@ -10,7 +10,8 @@ class image:
     """Class for Holding Data About an Image, Including a Grayscale Copy, Edges, Changes Made, and More."""
 
     name = ""
-    folder_path = ""
+    true_folder_path = ""
+    relative_folder_path = ""
     image_extension = ""
     color = None
     grayscale = None
@@ -18,9 +19,10 @@ class image:
     col_size = 0
     edits_done = []
     
-    def __init__(self, n, fp, ie, c=None, g=None, ed=[]) -> None:
+    def __init__(self, n="", tfp="", rfp="", ie="", c=None, g=None, ed=[]) -> None:
         self.name = n
-        self.folder_path = fp
+        self.true_folder_path = tfp
+        self.relative_folder_path = rfp
         self.image_extension = ie
         self.color = c
         self.grayscale = g
@@ -43,7 +45,7 @@ class image:
                 self.add_edit(f"{edit}")
                 
     def __str__(self) -> str:
-        return f"Name: {self.name}\n\tPath: {self.folder_path}\n\tImage Type: {self.image_extension}\n\tImage Size: {self.row_size} X {self.col_size}\n"
+        return f"Name: {self.name}\n\tPath: {self.true_folder_path}\n\tImage Type: {self.image_extension}\n\tImage Size: {self.row_size} X {self.col_size}\n"
                 
     def crop(self, boundries):
         """Crops Both the Color and Grayscale Image Arrays to Keep Both Versions Synced.
@@ -63,7 +65,7 @@ class image:
         
         return self
         
-    def save(self, to_save="color"):
+    def save(self, to_save="color", dest=""):
         """Saves the Image to Its Folder Path.
         
         Parameters
@@ -76,25 +78,31 @@ class image:
         settings.log_file.enter(f"Attempting to Save {self.name}")
         
         to_save = to_save.lower()
+        save_destination = ""
         
-        if(not os.path.exists(self.folder_path)): os.mkdir(self.folder_path)
+        if(dest==""):
+            save_destination = self.true_folder_path
+        else:
+            save_destination = self.dest        
+        
+        if(not os.path.exists(save_destination)): os.mkdir(save_destination)
         
         if(to_save == "color"):
             settings.log_file.enter(f"Saving Color Image Only")
-            ski.io.imsave(f"{self.folder_path}{self.name}{self.image_extension}", self.color)
-            self.add_edit(f"{self.name} (Colored) Saved to {self.folder_path}{self.name}{self.image_extension}")
+            ski.io.imsave(f"{save_destination}{self.name}{self.image_extension}", self.color)
+            self.add_edit(f"{self.name} (Colored) Saved to {save_destination}{self.name}{self.image_extension}")
         elif(to_save == "gray"):
             settings.log_file.enter(f"Saving Grayscale Image Only")
-            ski.io.imsave(f"{self.folder_path}{self.name}{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
-            self.add_edit(f"{self.name} (Grayscale) Saved to {self.folder_path}{self.name}{self.image_extension}")
+            ski.io.imsave(f"{save_destination}{self.name}{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
+            self.add_edit(f"{self.name} (Grayscale) Saved to {save_destination}{self.name}{self.image_extension}")
         elif(to_save == "both"):
             settings.log_file.enter(f"Saving Both Color and Grayscale Images")
-            ski.io.imsave(f"{self.folder_path}{self.name}_color{self.image_extension}", self.color)
-            self.add_edit(f"{self.name} (Colored) Saved to {self.folder_path}{self.name}_color{self.image_extension}")
-            ski.io.imsave(f"{self.folder_path}{self.name}_grayscale{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
-            self.add_edit(f"{self.name} (Grayscale) Saved to {self.folder_path}{self.name}_grayscale{self.image_extension}")
+            ski.io.imsave(f"{save_destination}{self.name}_color{self.image_extension}", self.color)
+            self.add_edit(f"{self.name} (Colored) Saved to {save_destination}{self.name}_color{self.image_extension}")
+            ski.io.imsave(f"{save_destination}{self.name}_grayscale{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
+            self.add_edit(f"{self.name} (Grayscale) Saved to {save_destination}{self.name}_grayscale{self.image_extension}")
                 
-        edits_file = open(f"{self.folder_path}{self.name}_edits.txt", "a")
+        edits_file = open(f"{save_destination}{self.name}_edits.txt", "a")
         for edit in self.edits_done:
             edits_file.write(f"{edit}\n")
         edits_file.close()
@@ -140,12 +148,16 @@ class image:
         return self
     
     def copy_from(self, img):
-        """Copies the Color and Greyscale Images from img.
+        """Copies All Information from img.
 
         Args:
             img (classes.image): The Image to Copy From
         """
         
+        self.name = deepcopy(img.name)
+        self.true_folder_path = deepcopy(img.true_folder_path)
+        self.image_extension = deepcopy(img.image_extension)
+        self.relative_folder_path = deepcopy(img.relative_folder_path)
         self.color = deepcopy(img.color)
         self.grayscale = deepcopy(img.grayscale)
         self.row_size = deepcopy(img.row_size)

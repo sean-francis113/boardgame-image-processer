@@ -46,7 +46,7 @@ def find_boundries(img, final_boundry=[]):
     # A Copy of the Image to Work On
     c_img = image.image(
                         n=img.name,
-                        fp=img.folder_path,
+                        tfp=img.true_folder_path,
                         ie=img.image_extension
                         )
     c_img.copy_from(img)
@@ -183,185 +183,7 @@ def find_boundries(img, final_boundry=[]):
                 break
             
         curr_row += 1
-    
-    '''
-    # Old Code Here For Future Reference
-    
-            
-    # Now Find Upper Boundry
-    settings.log_file.enter(f"Finding Upper Boundry")
-    bound_found = False
-    while(curr_row < c_img.row_size and bound_found == False):
-        curr_col = start_col
-        #Search Every Pixel in Row for Threshold
-        while(curr_col < c_img.col_size):
-            
-            # Grab Pixel Information
-            pixel = c_img.grayscale[curr_row, curr_col]
-            #if(prev_pixel == None): 
-                #prev_pixel = pixel
-                #continue
-            
-            # Ensure Number is Positive
-            pixel_difference = abs(pixel - base_pixel_gs)
-            
-            # If the Difference Has Reached the Threshold
-            if(pixel_difference >= gs_threshold):
-                settings.log_file.enter(f"Pixel Difference Hit Threshold")
-                settings.log_file.enter(f"Base: {base_pixel_gs}; Current: {pixel}; Difference: {pixel_difference}", True)
-                # Set the Upper Boundry to the Current Row
-                this_boundry[1] = curr_row
-                settings.log_file.enter(f"Upper Boundry: {curr_row}", True)
-                # Reset Previous Pixel Value and Start Positions
-                prev_pixel = None
-                curr_col = start_col
-                curr_row = start_row
-                # Set Boundry Found Flag
-                bound_found = True
-                break
-            
-            curr_col += 1
-            
-        curr_row += 1
-        
-    # Prepare to Find the Right and Lower Boundries
-    settings.log_file.enter(f"Reseting Positions to Find Next Boundries")
-    curr_row = this_boundry[1] + padding
-    curr_col = this_boundry[0]
-    #prev_pixel = None
-    
-    # Start Finding Right Boundry
-    settings.log_file.enter(f"Finding Right Boundry")
-    bound_found = False
-    while(curr_col < c_img.col_size and bound_found == False):
-        #settings.log_file.enter(f"Checking Column: {curr_col}")
-        pixel = c_img.grayscale[curr_row, curr_col]
-        
-        # Ensure Number is Positive
-        pixel_difference = abs(pixel - base_pixel_gs)
-        
-        if(pixel_difference >= gs_threshold and pad_count > 0):
-            #if(pad_count != 1): settings.log_file.enter(f"Padding Count Broken at {pad_count}")
-            pad_count = 0
-            pad_start = []
-        elif(pixel_difference < gs_threshold and pad_count == 0):
-            #settings.log_file.enter(f"Starting Padding Count")
-            pad_count = 1
-            pad_start = [curr_row, curr_col]
-        elif(pixel_difference < gs_threshold and (pad_count > 0 and pad_count <= padding)):
-            pad_count += 1
-        elif(pixel_difference < gs_threshold and (pad_count > padding)):
-            restart = False
-            #settings.log_file.enter(f"Padding Threshold Met. Checking Other Direction Now")
-            temp_img = c_img.grayscale[pad_start[0]:pad_start[0]+padding, pad_start[1]:curr_col+1]
-            row_num = 0
-            for row in temp_img:
-                col_num = 0
-                for col in row:
-                    p_diff = 0
-                    p_diff = temp_img[row_num,col_num] - base_pixel_gs
-                    # Make Sure the Difference is a Positive Number
-                    if(p_diff < 0): p_diff *= -1
-                    
-                    if(p_diff >= gs_threshold):
-                        #settings.log_file.enter(f"Pixel Threshold Met. Need to Find Padding Again")
-                        pad_count = 0
-                        curr_row = curr_row + 1
-                        curr_col = this_boundry[0]
-                        restart = True
-                        break
-                    
-                if(restart): break
-            
-            if(restart): continue
-            
-            settings.log_file.enter(f"Padding Found")
-            # Set the Right Boundry to the Current Column
-            this_boundry[2] = pad_start[1]
-            settings.log_file.enter(f"Right Boundry: {pad_start[1]}", True)
-            # Reset Previous Pixel Value
-            #prev_pixel = None
-            # Set Boundry Found Flag
-            bound_found = True
-            break               
-            
-        curr_col += 1
-            
-    # If the Image Edge Was Reached While Checking Padding
-    if(curr_col >= c_img.col_size and pad_start != []):
-        settings.log_file.enter(f"Padding Found")
-        # Set the Right Boundry to the Current Column
-        this_boundry[2] = pad_start[1]
-        settings.log_file.enter(f"Right Boundry: {pad_start[1]}", True)
-        
-    curr_row = this_boundry[1]
-    curr_col = this_boundry[0] + padding
-    # Now Find Lower Boundry
-    settings.log_file.enter(f"Finding Lower Boundry")
-    bound_found = False
-    pad_count = 0
-    pad_start = []
-    while(curr_row < img.row_size and bound_found == False):
-        pixel = c_img.grayscale[curr_row, curr_col]
-        
-        # Ensure Number is Positive
-        pixel_difference = abs(pixel - base_pixel_gs)        
-        
-        if(pixel_difference >= gs_threshold and pad_count > 0):
-            #settings.log_file.enter(f"Padding Count Broken at {pad_count}")
-            pad_count = 0
-            pad_start = []
-        elif(pixel_difference < gs_threshold and pad_count == 0):
-            #settings.log_file.enter(f"Pixel Threshold Met")
-            #settings.log_file.enter(f"Starting Padding Count")
-            pad_count = 1
-            pad_start = [curr_row, curr_col]
-        elif(pixel_difference < gs_threshold and (pad_count > 0 and pad_count <= padding)):
-            pad_count += 1
-        elif(pixel_difference < gs_threshold and (pad_count > padding)):
-            #settings.log_file.enter(f"Padding Threshold Met. Checking Other Direction Now")
-            restart = False
-            temp_img = c_img.grayscale[pad_start[0]:pad_start[0]+padding, pad_start[1]:curr_col+1]
-            row_num = 0
-            for row in temp_img:
-                col_num = 0
-                for col in row:    
-                    p_diff = 0
-                    p_diff = temp_img[row_num, col_num] - base_pixel_gs
-                    # Make Sure the Difference is a Positive Number
-                    if(p_diff < 0): p_diff *= -1
-                    
-                    if(p_diff >= gs_threshold):
-                        settings.log_file.enter(f"Pixel Threshold Met. Need to Find Padding Again")
-                        pad_count = 0
-                        curr_row = this_boundry[1]
-                        curr_col = curr_col + 1
-                        restart = True
-                        break
-                
-                if(restart): break
-                
-            if(restart): continue
-            
-            settings.log_file.enter(f"Padding Found")
-            # Set the Lower Boundry to the Current Row
-            this_boundry[3] = pad_start[0]
-            settings.log_file.enter(f"Lower Boundry: {pad_start[0]}", True)
-            # Reset Previous Pixel Value
-            #prev_pixel = None
-            # Set Boundry Found Flag
-            bound_found = True
-            break
-            
-        curr_row += 1
-       
-    # If the Image Edge Was Reached While Checking Padding
-    if(curr_row >= c_img.row_size and pad_start != []):
-        settings.log_file.enter(f"Padding Found")
-        # Set the Right Boundry to the Current Row
-        this_boundry[2] = pad_start[0]
-        settings.log_file.enter(f"Lower Boundry: {pad_start[0]}", True)
-    '''    
+  
     settings.log_file.enter(f"Found Boundry {this_boundry}")    
     # If A Crop Boundry Was Found
     if(this_boundry != [0,0,0,0]):
@@ -423,11 +245,7 @@ def crop_image(img, boundries):
         
         # Add Cropped Images to Final List
         for bound in boundries:
-            temp_img = image.image(
-                n=f"{img.name}_{num_iter:02}",
-                fp=f"{img.folder_path}{img.name}_crops\\",
-                ie=f"{img.image_extension}"
-            )
+            temp_img = image.image()
             temp_img.copy_from(img)
             
             c_img.append(temp_img.crop(bound))
@@ -465,7 +283,7 @@ def clean_image(img):
     # A Copy of the Image to Analyze and Work On
     c_img = image.image(
         n = img.name,
-        fp = img.folder_path,
+        tfp = img.true_folder_path,
         ie = img.image_extension        
     )
     c_img.copy_from(img)
