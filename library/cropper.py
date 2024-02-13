@@ -215,7 +215,7 @@ def crop_image(img, boundries):
         The Image Loaded from Skimage
     boundries : list, required
         The List of Boundries to Crop the Image to. 
-        Can Be a List of Lists, Which Indicates Multiple Crops to Make, Usually From the First.
+        Can Be a List of Lists, Which Indicates Multiple Crops to Make.
         
     Returns
     -------
