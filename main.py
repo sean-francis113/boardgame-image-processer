@@ -12,6 +12,7 @@ import classes.image as image
 import classes.log as log
 import library.helper as h
 import library.cropper as crop
+import library.enhancer as en
 
 # The List of Games Currently Able to Process Images For
 game_profile_list = ["GOA2", "Generic"]
@@ -144,11 +145,13 @@ def main():
         
         settings.log_file.enter(f"Starting Edits of {img}")
         final_img = crop.crop_image(img, crop.find_boundries(img))
-        
+
         if(type(final_img) == image.image):
             settings.log_file.enter(f"Cropped Image:\n\t{final_img}", True)
             settings.log_file.enter(f"Cleaning {final_img.name}'s Edges")
             final_img = crop.clean_image(final_img)
+            settings.log_file.enter(f"Sharpening {final_img.name}")
+            final_img = en.sharpen_image(final_img)
             if(save_dest == ""):
                 final_img.save(to_save="both")
             else:
@@ -160,48 +163,15 @@ def main():
                 settings.log_file.enter(f"Cropped Image:\n\t{i}", True)
                 settings.log_file.enter(f"Cleaning {i.name}'s Edges")
                 i = crop.clean_image(i)
+                settings.log_file.enter(f"Sharpening {i.name}")
+                i = en.sharpen_image(i)
                 if(save_dest == ""):
                     i.save(to_save="both")
                 else:
                     i.save(to_save="both", dest=f"{save_dest}{final_img.relative_folder_path}")
                 img_iter += 1 
-
-    """settings.log_file.enter("Creating New Image")
-    
-    test_img = image.image(
-        n="multi_card_croptest",
-        fp="E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\",
-        ie=".png", 
-        c=h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\multi_card_croptest.png"),
-        g=h.load_image("E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\multi_card_croptest.png", greyscale=True)
-        )
-
-    original_img = image.image(
-        n="multi_card_croptest_original",
-        fp="E:\\Tabletop_Sim_Custom\\Guards_of_Atlantis_II\\editted_images\\Arien\\",
-        ie=".png"
-    )
-    original_img.copy_from(test_img)
-
-    settings.log_file.enter(f"Created Image:\n\t{test_img}", True)
-
-    settings.log_file.enter(f"Starting Crop of {test_img.name}")
-    final_img = crop.crop_image(test_img, crop.find_boundries(test_img))
-
-    if(type(final_img) == image.image):
-        settings.log_file.enter(f"Cropped Image:\n\t{final_img}", True)
-        settings.log_file.enter(f"Cleaning {final_img.name}'s Edges")
-        final_img = crop.clean_image(final_img)
-        final_img.save(to_save="both")
-        settings.log_file.close()
-    elif(type(final_img) == list):
-        for img in final_img:
-            settings.log_file.enter(f"Cropped Image:\n\t{img}", True)
-            settings.log_file.enter(f"Cleaning {img.name}'s Edges")
-            img = crop.clean_image(img)
-            img.save(to_save="both")    
-        """
         
     settings.log_file.close()
     
 main()
+

@@ -3,8 +3,10 @@ import library.settings as settings
 import datetime
 import skimage as ski
 import os
+import numpy as np
 
 from copy import deepcopy
+from PIL import Image
 
 class image:
     """Class for Holding Data About an Image, Including a Grayscale Copy, Edges, Changes Made, and More."""
@@ -17,6 +19,7 @@ class image:
     grayscale = None
     row_size = 0
     col_size = 0
+    transparent_pixels = []
     edits_done = []
     
     def __init__(self, n="", tfp="", rfp="", ie="", c=None, g=None, ed=[]) -> None:
@@ -89,7 +92,7 @@ class image:
         
         if(to_save == "color"):
             settings.log_file.enter(f"Saving Color Image Only")
-            ski.io.imsave(f"{save_destination}{self.name}{self.image_extension}", self.color)
+            ski.io.imsave(f"{save_destination}{self.name}{self.image_extension}", (self.color).astype(np.uint8))
             self.add_edit(f"{self.name} (Colored) Saved to {save_destination}{self.name}{self.image_extension}")
         elif(to_save == "gray"):
             settings.log_file.enter(f"Saving Grayscale Image Only")
@@ -97,7 +100,7 @@ class image:
             self.add_edit(f"{self.name} (Grayscale) Saved to {save_destination}{self.name}{self.image_extension}")
         elif(to_save == "both"):
             settings.log_file.enter(f"Saving Both Color and Grayscale Images")
-            ski.io.imsave(f"{save_destination}{self.name}_color{self.image_extension}", self.color)
+            ski.io.imsave(f"{save_destination}{self.name}_color{self.image_extension}", (self.color).astype(np.uint8))
             self.add_edit(f"{self.name} (Colored) Saved to {save_destination}{self.name}_color{self.image_extension}")
             ski.io.imsave(f"{save_destination}{self.name}_grayscale{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
             self.add_edit(f"{self.name} (Grayscale) Saved to {save_destination}{self.name}_grayscale{self.image_extension}")
@@ -123,7 +126,7 @@ class image:
         edit_str = f"{date_str}: {str}"
         
         self.edits_done.append(edit_str)
-        settings.log_file.enter(edit_str)
+        settings.log_file.enter(str)
         
     def white_out(self, boundries):
         """Sets All Pixels Inside of Boundry to White.
@@ -164,3 +167,31 @@ class image:
         self.col_size = deepcopy(img.col_size)
         
         self.add_edit(f"Copied Images from {img.name}")
+
+    def get_transparency(self):
+        """Stores All Transparent Pixels for Future Restoration"""
+
+        self.transparent_pixels = []
+
+        row_iter = 0
+        col_iter = 0
+
+        while row_iter < self.row_size:
+            col_iter = 0
+            while col_iter < self.col_size:
+                if(self.color[row_iter, col_iter][3] == 0):
+                    self.transparent_pixels.append([row_iter, col_iter])
+                col_iter += 1
+            row_iter += 1
+
+    def restore_transparency(self):
+        """Restores All Stored Transparent Pixels"""
+
+        if(len(self.transparent_pixels) == 0):
+            settings.log_file.enter(f"{self.name} Has No Transparent Pixels Stored!", True)
+            return
+
+        for pixel in self.transparent_pixels:
+            self.color[pixel[0], pixel[1]][3] = 0
+
+        settings.log_file.enter(f"Pixels Restored!", True)
