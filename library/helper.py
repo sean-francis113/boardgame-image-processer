@@ -4,6 +4,7 @@ import skimage as ski
 import numpy as np
 import classes.image as image
 from copy import deepcopy
+import library.converter as convert
 
 def load_image(img_path, grayscale = False):
     """Takes an Image's Filepath, Loads It (As Greyscale If Requested) with Skimage, Then Returns the Loaded Image.
@@ -27,11 +28,12 @@ def load_image(img_path, grayscale = False):
         
         if(max_channels != 4):
             settings.log_file.enter(f"Converting Image to RGBA")
-            img = rgb2rgba(img)
+            img = convert.rgb2rgba(img)
         
     return img
 
-def rgb2rgba(img):
+
+'''def rgb2rgba(img):
     """Converts the Provided Image from RGB to RGBA, Adding Alpha Values to Every Pixel.
     
     Parameters
@@ -65,33 +67,27 @@ def rgba2rgb(img:image, background=[255,255,255], save_transparency=True):
     img.color = img.color[:,:,:3]
 
 def rgb2yuv(img:image.image):
-    """Uses Conversion Formulae Found at https://softpixel.com/~cwright/programming/colorspace/yuv/ to Convert Color Image from RGB to YUV"""
+    """Converts an image from RGB to YUV. Grabbed from https://gist.github.com/Quasimondo/c3590226c924a06b276d606f4f189639"""
+    m = np.array([[0.2126, 0.7152,  0.0722],
+                 [0.09991, -0.33609, 0.436],
+                 [0.615, -0.55861, -0.05639]])
+     
+    yuv = np.dot(img.color,m)
+    yuv[:,:,1:]+=128.0
+    img.color = yuv
 
-    if(img.image_extension.lower() == ".jpeg"):
-        settings.log_file.enter(f"Image is in JPEG Format, Which Uses a YUV-Like Colorspace. Converting to RGB, then Back to YUV.")
-        return # FOR NOW
+def yuv2rgb(img:image.image):
+    """Converts an image from YUV to RGB. Grabbed from https://gist.github.com/Quasimondo/c3590226c924a06b276d606f4f189639"""
+    m = np.array([[ 1.0, 1.0, 1.0],
+                 [-0.000007154783816076815, -0.3441331386566162, 1.7720025777816772],
+                 [ 1.4019975662231445, -0.7141380310058594 , 0.00001542569043522235] ])
     
-    yuv_img = deepcopy(img.color)
-
-    row_iter = 0
-    col_iter = 0
-    while row_iter < img.row_size:
-        col_iter = 0
-        while col_iter < img.col_size:
-            pixel = img.color[row_iter, col_iter]
-            r = pixel[0]
-            g = pixel[1]
-            b = pixel[2]
-            yuv_img[row_iter, col_iter] = [
-                (r * 0.299000) + (g * 0.587000) + (b * 0.11400), 
-                (r * -0.168736) + (g * -0.331264) + (b * 0.500000) + 128,
-                (r * 0.500000) + (g * -0.418688) + (b * -0.081312) + 128
-                ]
-            col_iter += 1
-        row_iter += 1
-            
-    img.color = yuv_img
-
+    rgb = np.dot(img.color,m)
+    rgb[:,:,0]-=179.45477266423404
+    rgb[:,:,1]+=135.45870971679688
+    rgb[:,:,2]-=226.8183044444304
+    rgb = rgb.clip(0,255)
+    img.color = rgb'''
 
 def display_image_data(img_path, grayscale = False):
     """Tester Function to Display the Dimensions and Channels of an Image.
@@ -106,7 +102,7 @@ def display_image_data(img_path, grayscale = False):
     print(img.shape)
     print(img[0,0])
     
-def ensure_folder_path(path:str, slash="\\"):
+def ensure_folder_path(path:str):
     """Ensures There is a Forwardslash (\\) or Backslash (/) at the End of the Folder Path
     
     Parameters
@@ -117,6 +113,16 @@ def ensure_folder_path(path:str, slash="\\"):
         Which Slash is Used in the OS for Filepaths.
     """
     
+    slash = ""
+
+    if("\\" in path):
+        slash = "\\"
+    elif("/" in path):
+        slash = "/"
+    else:
+        settings.log_file.enter(f"\"{path}\" is Not a Valid Folder Path. Assuming {path} is a File", True)
+        slash = "\\"
+
     if(path[-1] != slash):
         return f"{path}{slash}"
     else:
@@ -143,10 +149,10 @@ def seperate_file_info(filepath:str, parent_dir=""):
     
     file_name_full = str_list[-1]
     file_name = file_name_full.split(".")[0]
-    true_filepath = ensure_folder_path(slash.join(str_list[:-1]), slash)
+    true_filepath = ensure_folder_path(slash.join(str_list[:-1]))
     file_extension = f".{file_name_full.split('.')[1]}"
     relative_filepath = ""
     if(parent_dir != ""):
-        relative_filepath = ensure_folder_path(true_filepath.replace(parent_dir, ""), slash)
+        relative_filepath = ensure_folder_path(true_filepath.replace(parent_dir, ""))
         
     return file_name, true_filepath, file_extension, relative_filepath

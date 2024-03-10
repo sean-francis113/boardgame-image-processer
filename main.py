@@ -113,6 +113,8 @@ def main():
                 settings.log_file.enter(f"Cropped Image:\n\t{final_img}", True)
                 settings.log_file.enter(f"Cleaning {final_img.name}'s Edges")
                 final_img = crop.clean_image(final_img)
+                settings.log_file.enter(f"Sharpening {final_img.name}")
+                final_img = en.sharpen_image(final_img)
                 if(save_dest == ""):
                     final_img.save(to_save="both")
                 else:
@@ -124,6 +126,8 @@ def main():
                     settings.log_file.enter(f"Cropped Image:\n\t{i}", True)
                     settings.log_file.enter(f"Cleaning {i.name}'s Edges")
                     i = crop.clean_image(i)
+                    settings.log_file.enter(f"Sharpening {i.name}")
+                    i = en.sharpen_image(i)
                     if(save_dest == ""):
                         i.save(to_save="both")
                     else:
