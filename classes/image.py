@@ -17,18 +17,20 @@ class image:
     image_extension = ""
     color = None
     grayscale = None
+    grayscale_transparent = None
     row_size = 0
     col_size = 0
     transparent_pixels = []
     edits_done = []
     
-    def __init__(self, n="", tfp="", rfp="", ie="", c=None, g=None, ed=[]) -> None:
+    def __init__(self, n="", tfp="", rfp="", ie="", c=None, g=None, gst=None, ed=[]) -> None:
         self.name = n
         self.true_folder_path = tfp
         self.relative_folder_path = rfp
         self.image_extension = ie
         self.color = c
         self.grayscale = g
+        self.grayscale_transparent = gst
         
         if(c is None and g is None):
             self.row_size = 0
@@ -61,6 +63,7 @@ class image:
         
         self.color = self.color[boundries[1]:boundries[3]+1,boundries[0]:boundries[2]+1]
         self.grayscale = self.grayscale[boundries[1]:boundries[3]+1,boundries[0]:boundries[2]+1]
+        self.grayscale_transparent = self.grayscale_transparent[boundries[1]:boundries[3]+1,boundries[0]:boundries[2]+1]
         self.row_size = (boundries[3]+1) - (boundries[1])
         self.col_size = (boundries[2]+1) - (boundries[0])
                 
@@ -96,13 +99,13 @@ class image:
             self.add_edit(f"{self.name} (Colored) Saved to {save_destination}{self.name}{self.image_extension}")
         elif(to_save == "gray"):
             settings.log_file.enter(f"Saving Grayscale Image Only")
-            ski.io.imsave(f"{save_destination}{self.name}{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
+            ski.io.imsave(f"{save_destination}{self.name}{self.image_extension}", ski.util.img_as_ubyte(self.grayscale_transparent))
             self.add_edit(f"{self.name} (Grayscale) Saved to {save_destination}{self.name}{self.image_extension}")
         elif(to_save == "both"):
             settings.log_file.enter(f"Saving Both Color and Grayscale Images")
             ski.io.imsave(f"{save_destination}{self.name}_color{self.image_extension}", (self.color).astype(np.uint8))
             self.add_edit(f"{self.name} (Colored) Saved to {save_destination}{self.name}_color{self.image_extension}")
-            ski.io.imsave(f"{save_destination}{self.name}_grayscale{self.image_extension}", ski.util.img_as_ubyte(self.grayscale))
+            ski.io.imsave(f"{save_destination}{self.name}_grayscale{self.image_extension}", ski.util.img_as_ubyte(self.grayscale_transparent))
             self.add_edit(f"{self.name} (Grayscale) Saved to {save_destination}{self.name}_grayscale{self.image_extension}")
                 
         edits_file = open(f"{save_destination}{self.name}_edits.txt", "a")
@@ -193,5 +196,6 @@ class image:
 
         for pixel in self.transparent_pixels:
             self.color[pixel[0], pixel[1]][3] = 0
+            self.grayscale_transparent[pixel[0], pixel[1]][3] = 0
 
         settings.log_file.enter(f"Pixels Restored!", True)

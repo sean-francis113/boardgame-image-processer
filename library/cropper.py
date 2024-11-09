@@ -2,7 +2,8 @@ import library.settings as settings
 
 import skimage as ski
 import os
-import library.helper
+import library.helper as h
+import library.converter as convert
 import numpy
 from skimage.color import rgb2gray, rgba2rgb
 from skimage import data
@@ -102,6 +103,7 @@ def find_boundries(img, final_boundry=[]):
         gs_img = rgba2rgb(c_img.color)
         gs_img = rgb2gray(gs_img)
         c_img.grayscale = gs_img
+        c_img.grayscale_transparent = convert.gray2rgba(gs_img)
     
     # Start Finding Left Boundry
     settings.log_file.enter(f"Finding Left Boundry")

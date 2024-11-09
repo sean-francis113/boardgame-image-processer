@@ -13,6 +13,7 @@ import classes.log as log
 import library.helper as h
 import library.cropper as crop
 import library.enhancer as en
+import library.converter as convert
 
 # The List of Games Currently Able to Process Images For
 game_profile_list = ["GOA2", "Generic"]
@@ -95,13 +96,16 @@ def main():
                           
         for file in file_list:
             filename, t_filepath, image_extension, r_filepath = h.seperate_file_info(file)
+            gs = h.load_image(file, grayscale=True)
+            gs_t = convert.gray2rgba(gs)
             new_img = image.image(
                 n=filename,
                 tfp=t_filepath,
                 ie=image_extension,
                 rfp=r_filepath,
                 c=h.load_image(file),
-                g=h.load_image(file, grayscale=True)
+                g=gs,
+                gst=gs_t
             )
             image_list.append(new_img)
             
@@ -138,13 +142,18 @@ def main():
         settings.log_file.enter(f"The Source is a File. Preparing to Edit File")
 
         filename, t_filepath, image_extension, r_filepath = h.seperate_file_info(source)
+
+        gs = h.load_image(source, grayscale=True)
+        gs_t = convert.gray2rgba(gs)
+
         img = image.image(
             n=filename,
             tfp=t_filepath,
             ie=image_extension,
             rfp=r_filepath,
             c=h.load_image(source),
-            g=h.load_image(source, grayscale=True)
+            g=gs,
+            gst=gs_t
         )
         
         settings.log_file.enter(f"Starting Edits of {img}")

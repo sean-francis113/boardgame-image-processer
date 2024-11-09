@@ -156,3 +156,41 @@ def seperate_file_info(filepath:str, parent_dir=""):
         relative_filepath = ensure_folder_path(true_filepath.replace(parent_dir, ""))
         
     return file_name, true_filepath, file_extension, relative_filepath
+
+def get_transparency(img):
+    """Stores All Transparent Pixels for Future Restoration"""
+
+    if(type(img) == image.image):
+        img.get_transparency()
+        return
+    
+    transparent_pixels = []
+
+    row_iter = 0
+    col_iter = 0
+
+    while row_iter < img.shape[0]:
+        col_iter = 0
+        while col_iter < img.shape[1]:
+            if(img[row_iter, col_iter][3] == 0):
+                transparent_pixels.append([row_iter, col_iter])
+            col_iter += 1
+        row_iter += 1
+
+    return transparent_pixels
+
+def restore_transparency(img, transparent_pixels=[]):
+    """Restores All Stored Transparent Pixels"""
+
+    if(type(img) == image.image):
+        img.restore_transparency()
+        return
+
+    if(len(transparent_pixels) == 0):
+        settings.log_file.enter(f"No Transparent Pixels Provided!", True)
+        return
+
+    for pixel in transparent_pixels:
+        img[pixel[0], pixel[1]][3] = 0
+
+    settings.log_file.enter(f"Pixels Restored!", True)
